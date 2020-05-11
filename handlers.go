@@ -89,6 +89,7 @@ func (app *application) GetElectronics(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(out)
 }
 
+// getLatLonForCityOrPostalCode returns lat/lon for a city or a postal code
 func (app *application) getLatLonForCityOrPostalCode(w http.ResponseWriter, r *http.Request) (string, string, string, error, bool) {
 	keys, ok := r.URL.Query()["city"]
 	if !ok || len(keys[0]) < 1 {
@@ -133,7 +134,7 @@ func (app *application) getLatLonForCityOrPostalCode(w http.ResponseWriter, r *h
 	}
 
 	if foundCity == false {
-		// look up by postal code. We only need the first three chars
+		// Look up by postal code. We only need the first three characters.
 		postalCodePrefix := search[0:3]
 		latitude, longitude, err := app.GetLatLonForPostalCode(postalCodePrefix)
 		if err != nil {
@@ -179,6 +180,7 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	defer res.Body.Close()
+
 	if res.StatusCode != 200 {
 		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
 	}
@@ -221,7 +223,7 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 			queryAddress = fmt.Sprintf("%s %s", queryAddress, explodedAddress[k])
 		}
 
-		// see if we have the lat/lon for this one
+		// See if we have the lat/lon for this one
 		var latitude, longitude string
 		latitude, longitude, err := app.GetLatLonForOilDepot(strings.TrimSpace(depot), strings.TrimSpace(address))
 
@@ -290,5 +292,4 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 	out, _ := json.MarshalIndent(theData, "", "    ")
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(out)
-
 }
