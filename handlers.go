@@ -17,7 +17,8 @@ type DepotsJson struct {
 	Address      string `json:"address"`
 	Description  string `json:"description"`
 	Store        string `json:"store"`
-	ID           int    `json:"id"`
+	ID           string `json:"id"`
+	MyID         int    `json:"myID"`
 	City         string `json:"city"`
 	State        string `json:"state"`
 	Zip          string `json:"zip"`
@@ -53,7 +54,7 @@ func (app *application) GetElectronics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	theUrl := fmt.Sprintf(`https://www.recyclemyelectronics.ca/nb/wp-admin/admin-ajax.php?action=store_search&lat=%s&lng=%s&max_results=9999&search_radius=25&search=%s&statistics%%5Bcity%%5D=%s&statistics%%5Bregion%%5D=New+Brunswick&statistics%%5Bcountry%%5D=Canada`, lat, lon, url.QueryEscape(search), url.QueryEscape(search))
-
+	fmt.Println(theUrl)
 	resp, err := http.Get(theUrl)
 	if err != nil {
 		fmt.Println("no results for", theUrl)
@@ -272,7 +273,7 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 		}
 
 		j := DepotsJson{
-			ID:           id,
+			MyID:         id,
 			Store:        strings.TrimSpace(depot),
 			Address:      strings.TrimSpace(address),
 			Hours:        strings.TrimSpace(hours),

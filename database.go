@@ -11,6 +11,7 @@ func (app *application) GetLatLonForPostalCode(pc string) (string, string, error
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	var lat, lon string
+	var id int
 
 	query := `select lat, lon from postal where lower(prefix) = ?`
 	row := app.db.QueryRowContext(ctx, query, strings.ToLower(pc))
