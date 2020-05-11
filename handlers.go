@@ -213,11 +213,45 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 			products = strings.Join(items, ", ")
 		}
 
+		qString := strings.ReplaceAll(strings.TrimSpace(address), ", ", " ")
+		explodedAddress := strings.Split(qString, " ")
+		queryAddress := ""
+		for k := 0; k < len(explodedAddress)-2; k++ {
+			queryAddress = fmt.Sprintf("%s %s", queryAddress, explodedAddress[k])
+		}
+		query := fmt.Sprintf("https://nominatim.openstreetmap.org/search/%s?format=json&addressdetails=1&limit=1&polygon_svg=1", strings.TrimSpace(queryAddress))
+
+		queryResp, err := http.Get(query)
+		if err != nil {
+			app.errorLog.Println(err)
+		}
+		defer queryResp.Body.Close()
+
+		osData, err := ioutil.ReadAll(queryResp.Body)
+		if err != nil {
+			app.errorLog.Println("Can't find lat/lon for oil")
+		}
+
+		var osLat []LatLon
+		var latitude, longitude string
+
+		err = json.Unmarshal(osData, &osLat)
+		if err != nil {
+			app.errorLog.Println("failed to parse lat/lon")
+		} else {
+			if len(osLat) > 0 {
+				latitude = osLat[0].Lat
+				longitude = osLat[0].Lon
+			}
+		}
+
 		j := DepotsJson{
 			Store:    strings.TrimSpace(depot),
 			Address:  strings.TrimSpace(address),
 			Hours:    strings.TrimSpace(hours),
 			Products: products,
+			Lon:      longitude,
+			Lat:      latitude,
 		}
 		result = append(result, j)
 	})
