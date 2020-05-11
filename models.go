@@ -1,5 +1,6 @@
 package main
 
+// Depot holds information about a recycling location
 type Depot struct {
 	ID          int
 	DepotName   string
