@@ -6,6 +6,7 @@ func (app *application) routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/electronics", app.GetElectronics)
 	mux.HandleFunc("/oil", app.GetOil)
+	// TODO: Paint
 
 	return mux
 }
