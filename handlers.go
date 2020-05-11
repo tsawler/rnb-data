@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -26,6 +27,7 @@ type DepotsJson struct {
 	ResultNumber int    `json:"resultNumber"`
 	Phone        string `json:"phone"`
 	Hours        string `json:"hours"`
+	Products     string `json:"products"`
 }
 
 // LatLon holds latitude/longitude
@@ -133,7 +135,6 @@ func (app *application) getLatLonForCityOrPostalCode(w http.ResponseWriter, r *h
 	if foundCity == false {
 		// look up by postal code. We only need the first three chars
 		postalCodePrefix := search[0:3]
-		fmt.Println("Prefix", postalCodePrefix)
 		latitude, longitude, err := app.GetLatLonForPostalCode(postalCodePrefix)
 		if err != nil {
 			app.errorLog.Println(err)
@@ -143,7 +144,6 @@ func (app *application) getLatLonForCityOrPostalCode(w http.ResponseWriter, r *h
 		}
 		lat = latitude
 		lon = longitude
-		app.infoLog.Println("Lat/lon from postal code of", search, "is", lat, "/", lon)
 	}
 	return lat, lon, search, err, false
 }
@@ -173,7 +173,7 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := http.Get(fmt.Sprintf(`https://nb.uoma-atlantic.com/en/collection-facilities?location=%s`, search))
+	res, err := http.Get(fmt.Sprintf(`https://nb.uoma-atlantic.com/en/collection-facilities?location=%s`, url.QueryEscape(search)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -191,16 +191,33 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 	var result []DepotsJson
 
 	// Find the review items
-	doc.Find("#collection_facility-list-results").Each(func(i int, s *goquery.Selection) {
-		depot := s.Find("b").Text()
-		fmt.Println("-----------")
-		fmt.Println("")
-		fmt.Println(s.Html())
-		fmt.Println("-----------")
-		fmt.Println("")
+	doc.Find("#collection_facility-list-results li").Each(func(i int, s *goquery.Selection) {
+		address := s.Find("a").Text()
+		numberedDepot := s.Find("b").Text()
+		exploded := strings.Split(numberedDepot, " ")
+		depot := ""
+		for n := 1; n < len(exploded); n++ {
+			depot = fmt.Sprintf("%s %s", depot, exploded[n])
+		}
+		hours := s.Find("small").Text()
+		var items []string
+		s.Find("img").Each(func(j int, t *goquery.Selection) {
+			title := t.AttrOr("title", "")
+			if title != "" {
+				items = append(items, title)
+			}
+		})
+
+		var products string
+		if len(items) > 0 {
+			products = strings.Join(items, ", ")
+		}
 
 		j := DepotsJson{
-			Store: depot,
+			Store:    strings.TrimSpace(depot),
+			Address:  strings.TrimSpace(address),
+			Hours:    strings.TrimSpace(hours),
+			Products: products,
 		}
 		result = append(result, j)
 	})
