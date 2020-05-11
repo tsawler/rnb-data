@@ -10,29 +10,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// ElectronicsJson describes response from json feed
-type ElectronicsJson struct {
-	Address      string `json:"address"`
-	Description  string `json:"description"`
-	Store        string `json:"store"`
-	ID           string `json:"id"`
-	City         string `json:"city"`
-	State        string `json:"state"`
-	Zip          string `json:"zip"`
-	Lat          string `json:"lat"`
-	Lon          string `json:"lng"`
-	Terms        string `json:"terms"`
-	ResultNumber int    `json:"resultNumber"`
-	Phone        string `json:"phone"`
-	Hours        string `json:"hours"`
-}
-
-// LatLon holds latitude/longitude
-type LatLon struct {
-	Lat string `json:"lat"`
-	Lon string `json:"lon"`
-}
-
 // application is our app struct with config
 type application struct {
 	errorLog *log.Logger
