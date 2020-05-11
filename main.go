@@ -2,7 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"flag"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -72,4 +75,29 @@ func main() {
 	if err != nil {
 		errorLog.Fatal(err)
 	}
+}
+
+func (app *application) UpdatePaint() {
+
+	// delete from paint where province <> 'nb' or products not like '%paint%';
+
+	dat, err := ioutil.ReadFile("./formatted_data.json")
+	if err != nil {
+		fmt.Println(err)
+		log.Fatal(err)
+	}
+	var in []PaintData
+
+	err = json.Unmarshal(dat, &in)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, x := range in {
+		_, err := app.InsertPaintDepot(x)
+		if err != nil {
+			app.errorLog.Println(err)
+		}
+	}
+	fmt.Println("Done")
 }

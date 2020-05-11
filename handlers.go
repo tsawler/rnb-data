@@ -297,3 +297,61 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(out)
 }
+
+type PaintProvince struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+type PaintAddress struct {
+	Line1    string        `json:"address_line_1"`
+	Line2    string        `json:"address_line_2"`
+	City     string        `json:"city"`
+	Province PaintProvince `json:"province"`
+}
+
+type PaintContact struct {
+	Phone string `json:"phone"`
+}
+
+type PaintLocation struct {
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lng"`
+}
+
+type PaintData struct {
+	ID       int           `json:"myID"`
+	Address  PaintAddress  `json:"address"`
+	Products []string      `json:"accepted_products"`
+	Contact  PaintContact  `json:"contact"`
+	Location PaintLocation `json:"geolocation"`
+	Hours    string        `json:"hours"`
+	Depot    string        `json:"title"`
+}
+
+func (app *application) GetPaint(w http.ResponseWriter, r *http.Request) {
+	app.setupResponse(&w, r)
+
+	lat, lon, _, _, done := app.getLatLonForCityOrPostalCode(w, r)
+	if done {
+		return
+	}
+
+	depots, err := app.GetPaintMerchants()
+	if err != nil {
+		app.NotFound(w, r)
+		return
+	}
+
+	theData := jsonData{
+		OK:        true,
+		Latitude:  lat,
+		Longitude: lon,
+		Locations: depots,
+	}
+
+	out, _ := json.MarshalIndent(theData, "", "    ")
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(out)
+
+}
