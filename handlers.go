@@ -135,18 +135,44 @@ func (app *application) getLatLonForCityOrPostalCode(w http.ResponseWriter, r *h
 	}
 
 	if foundCity == false {
-		// Look up by postal code. We only need the first three characters.
+		type PCGeometry struct {
+			Type        string    `json:"type"`
+			Coordinates []float64 `json:"coordinates"`
+		}
+		type postalCode struct {
+			Prefix   string     `json:"title"`
+			Geometry PCGeometry `json:"geometry"`
+		}
+
 		postalCodePrefix := search[0:3]
-		latitude, longitude, err := app.GetLatLonForPostalCode(postalCodePrefix)
+		query := fmt.Sprintf("http://geogratis.gc.ca/services/geolocation/en/locate?q=%s", postalCodePrefix)
+
+		queryResp, err := http.Get(query)
 		if err != nil {
+			app.errorLog.Println("Error querying with URL", query)
+			foundCity = false
+		}
+		defer queryResp.Body.Close()
+
+		pcData, err := ioutil.ReadAll(queryResp.Body)
+		if err != nil {
+			app.errorLog.Println("Error reading body from gc")
+			foundCity = false
+		}
+
+		var postalCodeResponse []postalCode
+
+		err = json.Unmarshal(pcData, &postalCodeResponse)
+		if err != nil {
+			fmt.Println("** Error parsing json from gc")
 			app.errorLog.Println(err)
-			app.errorLog.Println("nothing in db for lat/lon when looking up by postal code")
 			app.NotFound(w, r)
 			return "", "", "", nil, true
 		}
-		app.infoLog.Println("using lat/lon of", latitude, longitude)
-		lat = latitude
-		lon = longitude
+		longitude := postalCodeResponse[0].Geometry.Coordinates[0]
+		latitude := postalCodeResponse[0].Geometry.Coordinates[1]
+		lat = fmt.Sprintf("%f", latitude)
+		lon = fmt.Sprintf("%f", longitude)
 	}
 	return lat, lon, search, err, false
 }
