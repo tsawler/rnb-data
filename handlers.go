@@ -54,7 +54,7 @@ func (app *application) GetElectronics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	theUrl := fmt.Sprintf(`https://www.recyclemyelectronics.ca/nb/wp-admin/admin-ajax.php?action=store_search&lat=%s&lng=%s&max_results=9999&search_radius=25&search=%s&statistics%%5Bcity%%5D=%s&statistics%%5Bregion%%5D=New+Brunswick&statistics%%5Bcountry%%5D=Canada`, lat, lon, url.QueryEscape(search), url.QueryEscape(search))
-	fmt.Println(theUrl)
+
 	resp, err := http.Get(theUrl)
 	if err != nil {
 		fmt.Println("no results for", theUrl)
@@ -332,15 +332,34 @@ type PaintData struct {
 func (app *application) GetPaint(w http.ResponseWriter, r *http.Request) {
 	app.setupResponse(&w, r)
 
+	actions, ok := r.URL.Query()["action"]
+	if !ok || len(actions[0]) < 1 {
+		app.NotFound(w, r)
+		return
+	}
+
 	lat, lon, _, _, done := app.getLatLonForCityOrPostalCode(w, r)
 	if done {
 		return
 	}
 
-	depots, err := app.GetPaintMerchants()
-	if err != nil {
-		app.NotFound(w, r)
-		return
+	action := actions[0]
+	var depots []DepotsJson
+
+	if action == "all" {
+		d, err := app.GetPaintMerchants()
+		if err != nil {
+			app.NotFound(w, r)
+			return
+		}
+		depots = d
+	} else {
+		d, err := app.GetPaintMerchantsForLatLon(lat, lon)
+		if err != nil {
+			app.NotFound(w, r)
+			return
+		}
+		depots = d
 	}
 
 	theData := jsonData{

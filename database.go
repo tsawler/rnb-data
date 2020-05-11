@@ -171,3 +171,55 @@ func (app *application) GetPaintMerchants() ([]DepotsJson, error) {
 
 	return stores, nil
 }
+
+func (app *application) GetPaintMerchantsForLatLon(lat, lon string) ([]DepotsJson, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var stores []DepotsJson
+
+	query := `
+		SELECT 
+			p.id, p.lat, p.lon, p.store, p.address_line_1, p.city, p.province, p.products, 
+			p.hours, p.phone,
+			(3959 * acos(cos(radians(?)) * cos(radians(p.lat)) * cos( radians( p.lon ) - radians(?) ) + sin( radians(?) ) * sin(radians(p.lat)) ) ) AS distance 
+		FROM paint p
+		HAVING distance < 25
+		ORDER BY distance 
+`
+
+	rows, err := app.db.QueryContext(ctx, query, lat, lon, lat)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var d float32
+		var s DepotsJson
+		err = rows.Scan(
+			&s.ID,
+			&s.Lat,
+			&s.Lon,
+			&s.Store,
+			&s.Address,
+			&s.City,
+			&s.State,
+			&s.Products,
+			&s.Hours,
+			&s.Phone,
+			&d,
+		)
+		if err != nil {
+			return nil, err
+		}
+		stores = append(stores, s)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return stores, nil
+
+}
