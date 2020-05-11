@@ -17,7 +17,7 @@ type DepotsJson struct {
 	Address      string `json:"address"`
 	Description  string `json:"description"`
 	Store        string `json:"store"`
-	ID           string `json:"id"`
+	ID           int    `json:"id"`
 	City         string `json:"city"`
 	State        string `json:"state"`
 	Zip          string `json:"zip"`
@@ -143,6 +143,7 @@ func (app *application) getLatLonForCityOrPostalCode(w http.ResponseWriter, r *h
 			app.NotFound(w, r)
 			return "", "", "", nil, true
 		}
+		app.infoLog.Println("using lat/lon of", latitude, longitude)
 		lat = latitude
 		lon = longitude
 	}
@@ -225,7 +226,8 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 
 		// See if we have the lat/lon for this one
 		var latitude, longitude string
-		latitude, longitude, err := app.GetLatLonForOilDepot(strings.TrimSpace(depot), strings.TrimSpace(address))
+		var id int
+		id, latitude, longitude, err := app.GetLatLonForOilDepot(strings.TrimSpace(depot), strings.TrimSpace(address))
 
 		if err != nil {
 			// We don't have it. Look it up.
@@ -263,13 +265,14 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 				Lon:       longitude,
 				Lat:       latitude,
 			}
-			err = app.SaveDepot(d)
+			id, err = app.SaveDepot(d)
 			if err != nil {
 				app.errorLog.Println(err)
 			}
 		}
 
 		j := DepotsJson{
+			ID:           id,
 			Store:        strings.TrimSpace(depot),
 			Address:      strings.TrimSpace(address),
 			Hours:        strings.TrimSpace(hours),
