@@ -12,7 +12,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// ElectronicsJson describes response from json feed
+// DepotsJson describes response from json feed
 type DepotsJson struct {
 	Address      string `json:"address"`
 	Description  string `json:"description"`
