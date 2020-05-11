@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// GetLatLonForPostalCode looks up geo data for a postal code prefix (3 chars)
 func (app *application) GetLatLonForPostalCode(pc string) (string, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -26,6 +27,7 @@ func (app *application) GetLatLonForPostalCode(pc string) (string, string, error
 	return lat, lon, nil
 }
 
+// GetLatLonForOilDepot gets lat / lon for a depot
 func (app *application) GetLatLonForOilDepot(depot, address string) (string, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -46,6 +48,7 @@ func (app *application) GetLatLonForOilDepot(depot, address string) (string, str
 	return lat, lon, nil
 }
 
+// SaveDepot caches info so we don't have to query the network
 func (app *application) SaveDepot(d Depot) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
