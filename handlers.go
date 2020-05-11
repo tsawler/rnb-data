@@ -165,6 +165,7 @@ func (app *application) setupResponse(w *http.ResponseWriter, req *http.Request)
 	(*w).Header().Set("Access-Control-Allow-Methods", "GET")
 }
 
+// GetOil gets oil recycling locations
 func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 	app.setupResponse(&w, r)
 
@@ -190,7 +191,7 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 
 	var result []DepotsJson
 
-	// Find the review items
+	// Find the items
 	doc.Find("#collection_facility-list-results li").Each(func(i int, s *goquery.Selection) {
 		address := s.Find("a").Text()
 		numberedDepot := s.Find("b").Text()
@@ -219,40 +220,63 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 		for k := 0; k < len(explodedAddress)-2; k++ {
 			queryAddress = fmt.Sprintf("%s %s", queryAddress, explodedAddress[k])
 		}
-		query := fmt.Sprintf("https://nominatim.openstreetmap.org/search/%s?format=json&addressdetails=1&limit=1&polygon_svg=1", strings.TrimSpace(queryAddress))
 
-		queryResp, err := http.Get(query)
-		if err != nil {
-			app.errorLog.Println(err)
-		}
-		defer queryResp.Body.Close()
-
-		osData, err := ioutil.ReadAll(queryResp.Body)
-		if err != nil {
-			app.errorLog.Println("Can't find lat/lon for oil")
-		}
-
-		var osLat []LatLon
+		// see if we have the lat/lon for this one
 		var latitude, longitude string
+		latitude, longitude, err := app.GetLatLonForOilDepot(strings.TrimSpace(depot), strings.TrimSpace(address))
 
-		err = json.Unmarshal(osData, &osLat)
 		if err != nil {
-			app.errorLog.Println("failed to parse lat/lon")
-		} else {
-			if len(osLat) > 0 {
-				latitude = osLat[0].Lat
-				longitude = osLat[0].Lon
+			// We don't have it. Look it up.
+			query := fmt.Sprintf("https://nominatim.openstreetmap.org/search/%s?format=json&addressdetails=1&limit=1&polygon_svg=1", strings.TrimSpace(queryAddress))
+
+			queryResp, err := http.Get(query)
+			if err != nil {
+				app.errorLog.Println(err)
+			}
+			defer queryResp.Body.Close()
+
+			osData, err := ioutil.ReadAll(queryResp.Body)
+			if err != nil {
+				app.errorLog.Println("Can't find lat/lon for oil")
+			}
+
+			var osLat []LatLon
+
+			err = json.Unmarshal(osData, &osLat)
+			if err != nil {
+				app.errorLog.Println("failed to parse lat/lon")
+			} else {
+				if len(osLat) > 0 {
+					latitude = osLat[0].Lat
+					longitude = osLat[0].Lon
+				}
+			}
+
+			// save it
+			d := Depot{
+				DepotName: strings.TrimSpace(depot),
+				Address:   strings.TrimSpace(address),
+				Hours:     strings.TrimSpace(hours),
+				Products:  products,
+				Lon:       longitude,
+				Lat:       latitude,
+			}
+			err = app.SaveDepot(d)
+			if err != nil {
+				app.errorLog.Println(err)
 			}
 		}
 
 		j := DepotsJson{
-			Store:    strings.TrimSpace(depot),
-			Address:  strings.TrimSpace(address),
-			Hours:    strings.TrimSpace(hours),
-			Products: products,
-			Lon:      longitude,
-			Lat:      latitude,
+			Store:        strings.TrimSpace(depot),
+			Address:      strings.TrimSpace(address),
+			Hours:        strings.TrimSpace(hours),
+			Products:     products,
+			Lon:          longitude,
+			Lat:          latitude,
+			ResultNumber: i + 1,
 		}
+
 		result = append(result, j)
 	})
 
