@@ -1,13 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"time"
+	"os"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type ElectronicsJson struct {
@@ -31,17 +35,60 @@ type LatLon struct {
 	Lon string `json:"lon"`
 }
 
-func main() {
-	http.HandleFunc("/electronics", getJson)
+type application struct {
+	errorLog *log.Logger
+	infoLog  *log.Logger
+	db       *sql.DB
+}
 
-	fmt.Println("**** Starting server at",time.Now().Format("2006-01-02 03:04:05"))
-	err := http.ListenAndServe(":8080", nil)
+// The openDB() function wraps sql.Open() and returns a sql.DB connection pool
+// for a given DSN.
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
+func main() {
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	addr := flag.String("addr", ":4000", "HTTP network address")
+	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
+	flag.Parse()
+
+	db, err := openDB(*dsn)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
+	// We also defer a call to db.Close(), so that the connection pool is closed
+	// before the main() function exits.
+	defer db.Close()
+
+	app := &application{
+		errorLog: errorLog,
+		infoLog:  infoLog,
+		db:       db,
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/snippet", app.getJson)
+
+	infoLog.Printf("Starting server on %s", *addr)
+
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func getJson(w http.ResponseWriter, r *http.Request) {
+func (app *application) getJson(w http.ResponseWriter, r *http.Request) {
 	setupResponse(&w, r)
 	keys, ok := r.URL.Query()["city"]
 	if !ok || len(keys[0]) < 1 {
@@ -65,6 +112,7 @@ func getJson(w http.ResponseWriter, r *http.Request) {
 
 	osData, err := ioutil.ReadAll(queryResp.Body)
 	if err != nil {
+		// didn't work, so try the postal code query
 		notFound(w, r)
 		return
 	}
