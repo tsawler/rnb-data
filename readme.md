@@ -6,7 +6,7 @@ Brunswick.
 
 ## Data sources
 
-Postal code lookup:
+Postal code lookup ([details](https://www.nrcan.gc.ca/earth-sciences/geography/topographic-information/web-services/geolocation-service/17304)):
 
 `https://geogratis.gc.ca/services/geolocation/en/locate?q=e3g`
 
