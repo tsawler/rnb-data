@@ -14,4 +14,4 @@ Postal code lookup ([details](https://www.nrcan.gc.ca/earth-sciences/geography/t
 
 Build: `docker build -t rnb_data_image .`
 
-Run: `docker container run --name rnb rnb_data_image $FLAGS`
+Run: `docker container run --name -e FLAGS="runtime flags" rnb rnb_data_image`
