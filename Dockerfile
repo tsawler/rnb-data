@@ -12,4 +12,4 @@ COPY places-linux places-linux
 RUN chmod +x /var/www/places-linux
 
 
-CMD /var/www/places-linux
+CMD /var/www/places-linux -addr ":8080" -dsn "homestead:secret@tcp($DOCKER_HOST:3306)/places?parseTime=true"
