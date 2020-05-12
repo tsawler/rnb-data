@@ -8,4 +8,7 @@ COPY places-linux places-linux
 
 RUN chmod +x /var/www/places-linux
 
-CMD /var/www/places-linux -addr ":8080" -dsn "homestead:secret@tcp($DOCKER_HOST:3306)/places?parseTime=true"
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.7.3/wait /wait
+RUN chmod +x /wait
+
+CMD /wait && /var/www/places-linux -addr ":8080" -dsn "root:secret@tcp($DB_HOST:3306)/places?parseTime=true"
