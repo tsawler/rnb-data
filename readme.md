@@ -3,7 +3,6 @@
 This app gets geo data for recycling locations in New
 Brunswick.
 
-
 ## Data sources
 
 Postal code lookup ([details](https://www.nrcan.gc.ca/earth-sciences/geography/topographic-information/web-services/geolocation-service/17304)):
