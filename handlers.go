@@ -203,7 +203,9 @@ func (app *application) GetOil(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := http.Get(fmt.Sprintf(`https://nb.uoma-atlantic.com/en/collection-facilities?location=%s`, url.QueryEscape(search)))
+	theUrl := fmt.Sprintf(`https://nb.uoma-atlantic.com/en/collection-facilities?location=%s`, url.QueryEscape(search))
+
+	res, err := http.Get(theUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
