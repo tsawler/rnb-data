@@ -24,9 +24,7 @@ type application struct {
 func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		return nil, err
-	}
-	if err = db.Ping(); err != nil {
+		fmt.Println("Error opening connection:", err)
 		return nil, err
 	}
 	return db, nil
@@ -40,7 +38,7 @@ func main() {
 
 	// read flags
 	addr := flag.String("addr", ":4000", "HTTP network address")
-	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
+	dsn := flag.String("dsn", "web:pass@/database_name?parseTime=true", "MySQL data source name")
 	flag.Parse()
 
 	// open connection to db

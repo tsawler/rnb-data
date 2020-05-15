@@ -231,7 +231,9 @@ func (app *application) GetCities(c string) (Cities, error) {
 	var results Cities
 	var cities []City
 
-	query := fmt.Sprintf(`SELECT id, place_name from cities where lower(place_name) like '%s%%' order by place_name limit 10`, strings.ToLower(c))
+	query := fmt.Sprintf(`SELECT distinct id, place_name from cities 
+				where lower(place_name) like '%s%%' 
+				order by place_name limit 10`, strings.ToLower(c))
 	fmt.Println(query)
 	rows, err := app.db.QueryContext(ctx, query)
 	if err != nil {
