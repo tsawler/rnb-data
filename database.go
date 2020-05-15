@@ -223,3 +223,37 @@ func (app *application) GetPaintMerchantsForLatLon(lat, lon string) ([]DepotsJso
 	return stores, nil
 
 }
+
+func (app *application) GetCities(c string) (Cities, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var results Cities
+	var cities []City
+
+	query := fmt.Sprintf(`SELECT id, place_name from cities where lower(place_name) like '%s%%' order by place_name limit 10`, strings.ToLower(c))
+	fmt.Println(query)
+	rows, err := app.db.QueryContext(ctx, query)
+	if err != nil {
+		return results, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var s City
+		err = rows.Scan(
+			&s.ID,
+			&s.City,
+		)
+		if err != nil {
+			return results, err
+		}
+		cities = append(cities, s)
+	}
+
+	if err = rows.Err(); err != nil {
+		return results, err
+	}
+	results.Cities = cities
+	return results, nil
+}

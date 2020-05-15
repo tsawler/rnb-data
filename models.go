@@ -12,3 +12,12 @@ type Depot struct {
 	Terms       string
 	Description string
 }
+
+type City struct {
+	ID   int    `json:"id"`
+	City string `json:"text"`
+}
+
+type Cities struct {
+	Cities []City `json:"results"`
+}

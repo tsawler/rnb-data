@@ -402,3 +402,26 @@ func (app *application) GetPaint(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(out)
 
 }
+
+func (app *application) Cities(w http.ResponseWriter, r *http.Request) {
+	keys, ok := r.URL.Query()["q"]
+
+	if !ok || len(keys[0]) < 1 {
+		app.NotFound(w, r)
+		return
+	}
+	q := keys[0]
+
+	fmt.Println(q)
+
+	results, err := app.GetCities(q)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	out, _ := json.MarshalIndent(results, "", "    ")
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(out)
+
+}

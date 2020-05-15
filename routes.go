@@ -10,6 +10,7 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/api/oil", app.GetOil)
 	mux.HandleFunc("/paint", app.GetPaint)
 	mux.HandleFunc("/api/paint", app.GetPaint)
+	mux.HandleFunc("/places", app.Cities)
 
 	return mux
 }
