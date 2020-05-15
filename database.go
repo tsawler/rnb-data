@@ -224,38 +224,35 @@ func (app *application) GetPaintMerchantsForLatLon(lat, lon string) ([]DepotsJso
 
 }
 
-func (app *application) GetCities(c string) (Cities, error) {
+func (app *application) GetCities(c string) ([]City, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-
-	var results Cities
 	var cities []City
 
-	query := fmt.Sprintf(`SELECT distinct id, place_name from cities 
+	query := fmt.Sprintf(`SELECT distinct place_name, concat(lat, ',', lon) as coords from cities 
 				where lower(place_name) like '%s%%' 
 				order by place_name limit 10`, strings.ToLower(c))
 	fmt.Println(query)
 	rows, err := app.db.QueryContext(ctx, query)
 	if err != nil {
-		return results, err
+		return cities, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var s City
 		err = rows.Scan(
-			&s.ID,
 			&s.City,
+			&s.LatLon,
 		)
 		if err != nil {
-			return results, err
+			return cities, err
 		}
 		cities = append(cities, s)
 	}
 
 	if err = rows.Err(); err != nil {
-		return results, err
+		return cities, err
 	}
-	results.Cities = cities
-	return results, nil
+	return cities, nil
 }

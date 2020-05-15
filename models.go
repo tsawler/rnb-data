@@ -14,10 +14,6 @@ type Depot struct {
 }
 
 type City struct {
-	ID   int    `json:"id"`
-	City string `json:"text"`
-}
-
-type Cities struct {
-	Cities []City `json:"results"`
+	LatLon string `json:"value"`
+	City   string `json:"text"`
 }

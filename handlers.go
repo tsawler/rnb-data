@@ -169,6 +169,12 @@ func (app *application) getLatLonForCityOrPostalCode(w http.ResponseWriter, r *h
 			app.NotFound(w, r)
 			return "", "", "", nil, true
 		}
+		if len(postalCodeResponse) == 0 {
+			fmt.Println("** Error parsing json from gc")
+			app.errorLog.Println(err)
+			app.NotFound(w, r)
+			return "", "", "", nil, true
+		}
 		longitude := postalCodeResponse[0].Geometry.Coordinates[0]
 		latitude := postalCodeResponse[0].Geometry.Coordinates[1]
 		lat = fmt.Sprintf("%f", latitude)
@@ -404,6 +410,7 @@ func (app *application) GetPaint(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) Cities(w http.ResponseWriter, r *http.Request) {
+	app.setupResponse(&w, r)
 	keys, ok := r.URL.Query()["q"]
 
 	if !ok || len(keys[0]) < 1 {
